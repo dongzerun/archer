@@ -20,8 +20,15 @@ func NewBackend(host string, port int) *Backend {
 	if err != nil {
 		log.Fatalf("Backend Dial  %s:%d failed %s", host, port, err)
 	}
-	b.c = c
-	b.w = bufio.NewWriter(c)
-	b.r = bufio.NewReader(c)
+
+	tcpc, ok := c.(*net.TCPConn)
+	if ok {
+		tcpc.SetNoDelay(false)
+		b.c = tcpc
+	} else {
+		b.c = c
+	}
+	b.w = bufio.NewWriter(b.c)
+	b.r = bufio.NewReader(b.c)
 	return b
 }
