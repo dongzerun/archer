@@ -1,4 +1,4 @@
-package simpleproxy
+package archer
 
 import (
 	"bufio"
@@ -25,7 +25,7 @@ type Session struct {
 func NewSession(p *Proxy, c net.Conn) *Session {
 	tcpc, ok := c.(*net.TCPConn)
 	if ok {
-		tcpc.SetNoDelay(true)
+		tcpc.SetNoDelay(false)
 	}
 	return &Session{
 		p: p,

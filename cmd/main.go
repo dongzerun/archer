@@ -7,7 +7,7 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/dongzerun/simpleproxy"
+	"github.com/dongzerun/archer"
 	log "github.com/ngaut/logging"
 )
 
@@ -50,6 +50,6 @@ func main() {
 	go func() {
 		log.Info(http.ListenAndServe(":6061", nil))
 	}()
-	p := simpleproxy.NewProxy(*port, *host, *pport)
+	p := archer.NewProxy(*port, *host, *pport)
 	p.Start()
 }
