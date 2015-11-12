@@ -161,7 +161,7 @@ func GetClusterNodes(host string, port int) ([]*Node, error) {
 		return nil, errors.New("Cluster nodes Command failed")
 	}
 
-	lines := strings.Split(string(br.Args[0]), "\r\n")
+	lines := strings.Split(string(br.Args[0]), "\n")
 	// 96ea3677b33334fb27382a08e475571a48342db0 10.10.10.86:6592 slave 4382646a92a3949bb9fdcfdc5a383e5e4b20a849 0 1447149668244 57 connected
 	// 219dfcf127e995244a43a5d57d95ea5f55b69c07 10.10.10.96:6595 master - 0 1447149668743 44 connected 3736-3939
 	ns := make([]*Node, 0)
