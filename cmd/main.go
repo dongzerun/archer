@@ -12,18 +12,14 @@ import (
 )
 
 var (
-	host       = flag.String("redis_host", "127.0.0.1", "single redis instance hostname, default localhost")
-	port       = flag.Int("redis_port", 6379, "single redis instance port, default 6379")
-	pport      = flag.Int("proxy_port", 6000, "proxy port listned on")
-	cpuprofile = flag.String("cpuprofile", "/tmp/cpuprofile", "write cpu profile to file")
-	memprofile = flag.String("memprofile", "/tmp/memprofile", "write cpu profile to file")
+	cfg = flag.String("config_file", "example.conf", "archer proxy config file")
 )
 
 func main() {
 	flag.Parse()
-	log.Info("flag parse: ", *host, *port, *pport)
+	log.Info("flag parse: ", *cfg)
 
-	runtime.GOMAXPROCS(runtime.NumCPU())
+	pc := archer.NewProxyConfig(*cfg)
 
 	go func() {
 		for {
@@ -50,6 +46,6 @@ func main() {
 	go func() {
 		log.Info(http.ListenAndServe(":6061", nil))
 	}()
-	p := archer.NewProxy(*port, *host, *pport)
+	p := archer.NewProxy(pc)
 	p.Start()
 }

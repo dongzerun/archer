@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"io"
 	"strings"
+
+	"github.com/dongzerun/archer/util"
 )
 
 var (
@@ -30,10 +32,14 @@ var (
 	ArrSep  = byte('*')
 	CRLF    = []byte("\r\n")
 
-	PING = []byte("PING")
-	PONG = []byte("PONG")
-	OK   = []byte("OK")
-	QUIT = []byte("QUIT")
+	PING   = []byte("PING")
+	PONG   = []byte("PONG")
+	SELECT = []byte("SELECT")
+	OK     = []byte("OK")
+	QUIT   = []byte("QUIT")
+	MOVED  = []byte("MOVED")
+	ASK    = []byte("ASK")
+	ASKING = []byte("ASKING")
 )
 
 // Response Interface based on: redis client protocol
@@ -48,6 +54,7 @@ type Resp interface {
 	Encode() []byte
 	String() string
 	Type() string
+	Length() int //只给ArrayResp使用，检测命令参数的个数，其它均为0
 }
 
 // 现在看，没必要分成 Cmd Args，直接全都是Args就好了
@@ -64,6 +71,10 @@ func (br *BaseResp) String() string {
 
 func (br *BaseResp) Type() string {
 	return br.Rtype
+}
+
+func (br *BaseResp) Length() int {
+	return 0
 }
 
 type SimpleResp struct {
@@ -134,7 +145,7 @@ func (br *BulkResp) Encode() []byte {
 
 	var b bytes.Buffer
 	b.WriteByte(BulkSep)
-	b.Write(Itob(len(br.Args[0])))
+	b.Write(util.Itob(len(br.Args[0])))
 	b.Write(CRLF)
 	b.Write(br.Args[0])
 	b.Write(CRLF)
@@ -162,13 +173,33 @@ func (ar *ArrayResp) Encode() []byte {
 
 	var b bytes.Buffer
 	b.WriteByte(ArrSep)
-	b.Write(Itob(len(ar.Args)))
+	b.Write(util.Itob(len(ar.Args)))
 	b.Write(CRLF)
 
 	for _, arg := range ar.Args {
 		b.Write(arg.Encode())
 	}
 	return b.Bytes()
+}
+
+func (ar *ArrayResp) Length() int {
+	return len(ar.Args) - 1
+}
+
+func WriteRawByte(w *bufio.Writer, data []byte) error {
+	_, err := w.Write(data)
+	if err != nil {
+		return err
+	}
+	err = w.Flush()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func WriteProtocol(w *bufio.Writer, r Resp) error {
+	return WriteRawByte(w, r.Encode())
 }
 
 // binary data  may contain \r\n
@@ -198,7 +229,7 @@ func ReadProtocol(r *bufio.Reader) (Resp, error) {
 	case BulkSep:
 		br := &BulkResp{}
 		br.Rtype = BulkType
-		l, err := parseLen(res[1 : len(res)-2])
+		l, err := util.ParseLen(res[1 : len(res)-2])
 		if err != nil {
 			return nil, err
 		}
@@ -218,7 +249,7 @@ func ReadProtocol(r *bufio.Reader) (Resp, error) {
 	case ArrSep:
 		ar := &ArrayResp{}
 		ar.Rtype = ArrayType
-		n, err := parseLen(res[1 : len(res)-2])
+		n, err := util.ParseLen(res[1 : len(res)-2])
 		if err != nil {
 			return nil, err
 		}

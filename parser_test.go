@@ -20,6 +20,10 @@ func TestSimpleResp(t *testing.T) {
 	if !bytes.Equal(res, sr.Encode()) {
 		t.Errorf("SimpleResp Encode Error %s expected %s", sr.Encode(), res)
 	}
+
+	if sr.Length() != 0 {
+		t.Errorf("SimpleResp Length must equal 0")
+	}
 }
 
 func TestErrorResp(t *testing.T) {
@@ -35,6 +39,10 @@ func TestErrorResp(t *testing.T) {
 	if !bytes.Equal(res, er.Encode()) {
 		t.Errorf("ErrorResp Encode Error %s expected %s", er.Encode(), res)
 	}
+
+	if er.Length() != 0 {
+		t.Errorf("ErrorResp Length must equal 0")
+	}
 }
 
 func TestIntResp(t *testing.T) {
@@ -49,6 +57,9 @@ func TestIntResp(t *testing.T) {
 	res := []byte(":10\r\n")
 	if !bytes.Equal(res, ir.Encode()) {
 		t.Errorf("IntResp Encode Error %s expected %s", ir.Encode(), res)
+	}
+	if ir.Length() != 0 {
+		t.Errorf("IntResp Length must equal 0")
 	}
 }
 
@@ -77,6 +88,10 @@ func TestBulkResp(t *testing.T) {
 	if !bytes.Equal(br1.Encode(), []byte("$-1\r\n")) {
 		t.Errorf("BulkResp Encode Empty Error %s expected $-1\r\n", br.Encode())
 	}
+
+	if br.Length() != 0 {
+		t.Errorf("BulkResp Length must equal 0")
+	}
 }
 
 func TestArrayResp(t *testing.T) {
@@ -103,6 +118,10 @@ func TestArrayResp(t *testing.T) {
 	res := []byte("*4\r\n$5\r\nhello\r\n$5\r\nworld\r\n$12\r\nwocao\r\nzhaha\r\n$-1\r\n")
 	if !bytes.Equal(res, ar.Encode()) {
 		t.Errorf("ArrayResp Encode  Error %s expected %s", ar.Encode(), res)
+	}
+
+	if ar.Length() != 3 {
+		t.Errorf("ArrayResp Length must equal 3 now %d ", ar.Length())
 	}
 }
 

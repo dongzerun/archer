@@ -10,19 +10,28 @@ import (
 )
 
 type Proxy struct {
-	l net.Listener
-	h string
-	p int
+	l      net.Listener
+	h      string
+	p      int
+	filter Filter
+	pc     *ProxyConfig
+
+	sm      *SessMana
+	cluster *Cluster
 }
 
-func NewProxy(port int, host string, pport int) *Proxy {
-	p := &Proxy{}
-	p.h = host
-	p.p = port
+func NewProxy(pc *ProxyConfig) *Proxy {
+	p := &Proxy{
+		sm:      newSessMana(pc.idleTimeout),
+		cluster: NewCluster(pc),
+		filter:  &StrFilter{},
+		pc:      pc,
+	}
 
-	l, err := net.Listen("tcp4", fmt.Sprintf(":%d", pport))
+	// listen 放到最后
+	l, err := net.Listen("tcp4", fmt.Sprintf(":%d", pc.port))
 	if err != nil {
-		log.Fatalf("Proxy Listen  %d failed %s", pport, err)
+		log.Fatalf("Proxy Listen  %d failed %s", pc.port, err.Error())
 	}
 	p.l = l
 	return p
@@ -51,6 +60,7 @@ func (p *Proxy) Start() {
 
 func HandleConn(p *Proxy, c net.Conn) {
 	s := NewSession(p, c)
+	p.sm.Put(c.RemoteAddr().String(), s)
 	s.Serve()
 	log.Warning("Close client ", c.RemoteAddr().String())
 	c.Close()

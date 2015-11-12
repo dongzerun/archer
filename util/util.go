@@ -1,16 +1,15 @@
-package archer
+package util
 
 import (
 	"errors"
 	"strconv"
-	"sync"
 )
 
 func Itob(i int) []byte {
 	return []byte(strconv.Itoa(i))
 }
 
-func parseLen(p []byte) (int, error) {
+func ParseLen(p []byte) (int, error) {
 	if len(p) == 0 {
 		return -1, errors.New("malformed length")
 	}
@@ -32,14 +31,24 @@ func parseLen(p []byte) (int, error) {
 	return n, nil
 }
 
-type WaitGroupWrapper struct {
-	sync.WaitGroup
+func LowerSlice(buf []byte) []byte {
+	for i, r := range buf {
+		if 'A' <= r && r <= 'Z' {
+			r += 'a' - 'A'
+		}
+
+		buf[i] = r
+	}
+	return buf
 }
 
-func (w *WaitGroupWrapper) Wrap(cb func()) {
-	w.Add(1)
-	go func() {
-		cb()
-		w.Done()
-	}()
+func UpperSlice(buf []byte) []byte {
+	for i, r := range buf {
+		if 'a' <= r && r <= 'z' {
+			r -= 'a' - 'A'
+		}
+
+		buf[i] = r
+	}
+	return buf
 }
