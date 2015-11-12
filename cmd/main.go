@@ -17,7 +17,6 @@ var (
 
 func main() {
 	flag.Parse()
-	log.Info("flag parse: ", *cfg)
 
 	pc := archer.NewProxyConfig(*cfg)
 

@@ -59,6 +59,7 @@ func NewProxyConfig(file string) *ProxyConfig {
 	// redis
 	pc.poolSize = c.DefaultInt("redis::poolsize", 10)
 	pc.nodes = strings.Fields(c.DefaultString("redis::nodes", ""))
+	pc.reloadSlot = time.Duration(c.DefaultInt("redis::reloadslot", 600))
 
 	//common
 	pc.idleTimeout = time.Duration(c.DefaultInt("common::idletimeout", 30))

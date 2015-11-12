@@ -17,8 +17,8 @@ type Cluster struct {
 func NewCluster(pc *ProxyConfig) *Cluster {
 	c := &Cluster{
 		pc:    pc,
-		pools: make(map[string]*ConnPool),
-		opts:  make(map[string]*Options),
+		pools: make(map[string]*ConnPool, 1),
+		opts:  make(map[string]*Options, 1),
 		topo:  NewTopo(pc),
 	}
 	c.initializePool()
@@ -27,6 +27,7 @@ func NewCluster(pc *ProxyConfig) *Cluster {
 
 func (c *Cluster) GetConn(key []byte, slave bool) (Conn, error) {
 	id := c.topo.GetNodeID(key, slave)
+	log.Infof("GetConn %s for key: %s", id, string(key))
 
 	pool, ok := c.pools[id]
 	if !ok {
@@ -68,18 +69,20 @@ func (c *Cluster) PutConn(cn Conn) {
 
 // initialize conn Pool before Serve
 func (c *Cluster) initializePool() {
-	log.Info("Cluster start initializePool")
-	nodes := make([]*Node, len(c.pc.nodes))
+	log.Info("Cluster start initializePool ", len(c.pc.nodes))
+	nodes := make(map[string]*Node, len(c.pc.nodes))
 	for _, s := range c.topo.slots {
 		if s.master != nil {
-			nodes = append(nodes, s.master)
+			nodes[s.master.id] = s.master
 		}
 		for _, n := range s.slaves {
-			nodes = append(nodes, n)
+			nodes[n.id] = n
 		}
 	}
 
+	log.Info("initializePool nodes len ", len(nodes))
 	for _, n := range nodes {
+		log.Info("Cluster nodes ", n.id)
 		_, ok := c.pools[n.id]
 		if ok {
 			log.Fatalf("Cluster initializePool duplicate %s %s:%d", n.id, n.host, n.port)

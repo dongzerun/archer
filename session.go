@@ -212,7 +212,7 @@ func (s *Session) WriteLoop() {
 	for {
 		select {
 		case r := <-s.resps:
-			log.Info("WriteLoop Read Response ", r.resp.Encode(), r.seq)
+			log.Info("WriteLoop Read Response ", r.resp.String(), r.seq)
 			// req and resp sequence must equal, thus we can ensure pipeline seq
 			resp := r.resp
 			if r.seq > s.respSequence {
@@ -359,10 +359,10 @@ func (s *Session) Redirect(tp string, req *ArrayResp, target string) Resp {
 }
 
 func (s *Session) ExecWithRedirect(req *ArrayResp, redirect bool) (Resp, error) {
-	//ensure req.Args[0].Args[1] is key
-	rc, err := s.GetRedisConnByKey(req.Args[0].Args[1], false)
+	//ensure req.Args[1].Args[0] is key
+	rc, err := s.GetRedisConnByKey(req.Args[1].Args[0], false)
 	if err != nil {
-		log.Warning("ExecWithRedirect GetRedisConnByKey get conn failed")
+		log.Warning("ExecWithRedirect GetRedisConnByKey get conn failed ", err)
 		return nil, err
 	}
 	//reclaim RedisConn

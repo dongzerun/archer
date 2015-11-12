@@ -165,11 +165,13 @@ func GetClusterNodes(host string, port int) ([]*Node, error) {
 	// 96ea3677b33334fb27382a08e475571a48342db0 10.10.10.86:6592 slave 4382646a92a3949bb9fdcfdc5a383e5e4b20a849 0 1447149668244 57 connected
 	// 219dfcf127e995244a43a5d57d95ea5f55b69c07 10.10.10.96:6595 master - 0 1447149668743 44 connected 3736-3939
 	ns := make([]*Node, 0)
-	for _, l := range lines {
-		n := &Node{}
+	for _, l := range lines[:len(lines)-1] {
+		n := &Node{
+			serveSlot: new(SlotRange),
+		}
 		fields := strings.Fields(l)
-		log.Info("GetClusterNodes fields: ", fields)
-		if len(fields) != 8 && len(fields) != 9 {
+		log.Info("GetClusterNodes fields: ", len(fields), fields)
+		if len(fields) < 8 || len(fields) > 9 {
 			return nil, errors.New("Cluster nodes fileds wrong")
 		}
 

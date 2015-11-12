@@ -33,7 +33,7 @@ func (s *StrFilter) Inspect(r Resp) (string, error) {
 
 	cmd := hack.String(util.UpperSlice(ar.Args[0].Args[0]))
 
-	l := ar.Length()
+	l := ar.Length() + 1
 
 	// 黑名单
 	if _, ok := blackList[cmd]; ok {
