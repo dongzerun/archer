@@ -168,6 +168,7 @@ func GetClusterNodes(host string, port int) ([]*Node, error) {
 	for _, l := range lines {
 		n := &Node{}
 		fields := strings.Fields(l)
+		log.Info("GetClusterNodes fields: ", fields)
 		if len(fields) != 8 && len(fields) != 9 {
 			return nil, errors.New("Cluster nodes fileds wrong")
 		}
