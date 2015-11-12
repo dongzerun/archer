@@ -49,6 +49,7 @@ func NewTopo(pc *ProxyConfig) *Topology {
 	t := &Topology{
 		conf:       pc,
 		reloadChan: make(chan int, 1),
+		slots:      make([]*Slot, 1),
 	}
 
 	t.reloadSlots()
