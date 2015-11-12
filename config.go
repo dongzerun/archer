@@ -75,6 +75,7 @@ func NewProxyConfig(file string) *ProxyConfig {
 	pc.memFile = c.DefaultString("debug::memfile", "/tmp/memfile")
 
 	pc.apply()
+	log.Info("NewProxyConfig ", pc)
 	return pc
 }
 
