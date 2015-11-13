@@ -135,12 +135,12 @@ func (s *Session) ReadLoop() {
 			goto quit
 		}
 
-		log.Info("ReadLoop receive cmd ", cmd.Type(), cmd.String())
-
 		s.cmds <- &wrappedResp{
 			seq:  s.reqSequence,
 			resp: cmd,
 		}
+
+		log.Info("ReadLoop receive cmd ", cmd.Type(), cmd.String(), s.reqSequence)
 
 		s.lastUsed = time.Now()
 		atomic.AddInt64(&s.reqSequence, 1)
@@ -159,6 +159,7 @@ func (s *Session) Dispatch() {
 				continue
 			}
 
+			log.Info("Dispatch after Inspect cmd: ", command)
 			ar := c.resp.(*ArrayResp)
 			switch command {
 			case "PING":
