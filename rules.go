@@ -9,6 +9,8 @@ var reqrules = map[string][]interface{}{
 	// proxy special command
 	"PROXY":  []interface{}{2, 5},
 	"SELECT": []interface{}{2, 2},
+	"PING":   []interface{}{1, 1},
+	"QUIT":   []interface{}{1, 1},
 	// key
 	"DEL":       []interface{}{2, 2001},
 	"TYPE":      []interface{}{2, 2},

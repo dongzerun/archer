@@ -135,12 +135,8 @@ func (s *Session) ReadLoop() {
 			goto quit
 		}
 
-		s.cmds <- &wrappedResp{
-			seq:  s.reqSequence,
-			resp: cmd,
-		}
-
 		log.Info("ReadLoop receive cmd ", cmd.Type(), cmd.String(), s.reqSequence)
+		s.cmds <- WrappedResp(cmd, s.reqSequence)
 
 		s.lastUsed = time.Now()
 		atomic.AddInt64(&s.reqSequence, 1)
