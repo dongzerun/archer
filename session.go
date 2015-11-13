@@ -32,14 +32,12 @@ func newSessMana(t time.Duration) *SessMana {
 }
 
 func (sm *SessMana) Put(remote string, s *Session) {
-	log.Info("New Session Put to Session Management ", remote)
 	sm.l.Lock()
 	defer sm.l.Unlock()
 	sm.pool[remote] = s
 }
 
 func (sm *SessMana) Del(remote string, s *Session) {
-	log.Info("New Session Del from Session Management ", remote)
 	sm.l.Lock()
 	defer sm.l.Unlock()
 	delete(sm.pool, remote)
@@ -135,7 +133,6 @@ func (s *Session) ReadLoop() {
 			goto quit
 		}
 
-		log.Info("ReadLoop receive cmd ", cmd.Type(), cmd.String(), s.reqSequence)
 		s.cmds <- WrappedResp(cmd, s.reqSequence)
 
 		s.lastUsed = time.Now()
@@ -155,7 +152,6 @@ func (s *Session) Dispatch() {
 				continue
 			}
 
-			log.Info("Dispatch after Inspect cmd: ", command)
 			ar := c.resp.(*ArrayResp)
 			switch command {
 			case "PING":
@@ -222,11 +218,11 @@ func (s *Session) WriteLoop() {
 	for {
 		select {
 		case r := <-s.resps:
-			log.Info("WriteLoop Read Response ", r.resp.String(), r.seq)
+			// log.Info("WriteLoop Read Response ", r.resp.String(), r.seq)
 			// req and resp sequence must equal, thus we can ensure pipeline seq
 			resp := r.resp
 			if r.seq > s.respSequence {
-				log.Warningf("WriteLoop receive resp unorder %d expected %d", r.seq, s.respSequence)
+				// log.Warningf("WriteLoop receive resp unorder %d expected %d", r.seq, s.respSequence)
 				s.ooo[r.seq] = r.resp
 				// we will find r.respSequence in s.ooo
 				var ok bool
@@ -238,7 +234,7 @@ func (s *Session) WriteLoop() {
 					if r.seq-s.respSequence < int64(s.p.pc.conCurrency-1) {
 						continue
 					}
-					log.Warningf("WriteLoop receive resp unorder for %d, we send ERROR instead", s.p.pc.conCurrency-1)
+					// log.Warningf("WriteLoop receive resp unorder for %d, we send ERROR instead", s.p.pc.conCurrency-1)
 					er := &ErrorResp{}
 					er.Rtype = ErrorType
 					er.Args = append(er.Args, []byte("proxy internal error pipeline unorder"))
@@ -338,7 +334,7 @@ func (s *Session) Redirect(tp string, req *ArrayResp, target string) Resp {
 	//reclaim RedisConn
 	rc, err := s.GetRedisConnByID(target)
 	if err != nil {
-		log.Warning("Session forward get conn not RedisConn")
+		// log.Warning("Session forward get conn not RedisConn")
 		er := &ErrorResp{}
 		er.Rtype = ErrorType
 		er.Args = append(er.Args, []byte("proxy internal error pool conn not RedisConn"))
