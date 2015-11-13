@@ -27,23 +27,8 @@ func main() {
 		}
 	}()
 
-	// if *cpuprofile != "" {
-	// 	f, err := os.Create(*cpuprofile)
-	// 	if err != nil {
-	// 		log.Fatal(err)
-	// 	}
-	// 	pprof.StartCPUProfile(f)
-	// 	defer pprof.StopCPUProfile()
-	// }
-
-	// if *memprofile != "" {
-	// 	f, err := os.Create(*memprofile)
-	// 	if err != nil {
-	// 		pprof.WriteHeapProfile(f)
-	// 	}
-	// }
 	go func() {
-		log.Info(http.ListenAndServe(":6061", nil))
+		log.Info(http.ListenAndServe("0.0.0.0:6061", nil))
 	}()
 	p := archer.NewProxy(pc)
 	p.Start()

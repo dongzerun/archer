@@ -1,7 +1,9 @@
 package archer
 
 import (
+	"os"
 	"runtime"
+	"runtime/pprof"
 	"strings"
 	"time"
 
@@ -72,8 +74,8 @@ func NewProxyConfig(file string) *ProxyConfig {
 	pc.logLevel = c.DefaultString("log::loglevel", "info")
 
 	//debug
-	pc.cpuFile = c.DefaultString("debug::cpufile", "/tmp/cpufile")
-	pc.memFile = c.DefaultString("debug::memfile", "/tmp/memfile")
+	pc.cpuFile = c.DefaultString("debug::cpufile", "")
+	pc.memFile = c.DefaultString("debug::memfile", "")
 
 	pc.apply()
 	log.Info("NewProxyConfig ", pc)
@@ -116,4 +118,19 @@ func (pc *ProxyConfig) apply() {
 		pc.poolSize = 10
 	}
 
+	if pc.cpuFile != "" {
+		f, err := os.Create(pc.cpuFile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
+	}
+
+	if pc.memFile != "" {
+		f, err := os.Create(pc.memFile)
+		if err != nil {
+			pprof.WriteHeapProfile(f)
+		}
+	}
 }
