@@ -123,6 +123,7 @@ func (pc *ProxyConfig) apply() {
 		if err != nil {
 			log.Fatal(err)
 		}
+		log.Warning("Archer start CPUProfile ", pc.cpuFile)
 		pprof.StartCPUProfile(f)
 		defer pprof.StopCPUProfile()
 	}
@@ -130,6 +131,7 @@ func (pc *ProxyConfig) apply() {
 	if pc.memFile != "" {
 		f, err := os.Create(pc.memFile)
 		if err != nil {
+			log.Warning("Archer start HeapProfile ", pc.memFile)
 			pprof.WriteHeapProfile(f)
 		}
 	}
