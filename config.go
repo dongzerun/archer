@@ -1,6 +1,8 @@
 package archer
 
 import (
+	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"runtime"
 	"runtime/pprof"
@@ -135,4 +137,8 @@ func (pc *ProxyConfig) apply() {
 			pprof.WriteHeapProfile(f)
 		}
 	}
+
+	go func() {
+		log.Warning(http.ListenAndServe(":6061", nil))
+	}()
 }
