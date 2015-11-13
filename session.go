@@ -135,6 +135,8 @@ func (s *Session) ReadLoop() {
 			goto quit
 		}
 
+		log.Info("ReadLoop receive cmd ", cmd.Type(), cmd.String())
+
 		s.cmds <- &wrappedResp{
 			seq:  s.reqSequence,
 			resp: cmd,
