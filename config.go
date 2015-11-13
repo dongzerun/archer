@@ -130,7 +130,7 @@ func (pc *ProxyConfig) apply() {
 
 	if pc.memFile != "" {
 		f, err := os.Create(pc.memFile)
-		if err != nil {
+		if err == nil {
 			log.Warning("Archer start HeapProfile ", pc.memFile)
 			pprof.WriteHeapProfile(f)
 		}
