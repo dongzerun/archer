@@ -1,6 +1,9 @@
 package archer
 
 import (
+	"bytes"
+
+	"github.com/dongzerun/archer/util"
 	log "github.com/ngaut/logging"
 )
 
@@ -17,8 +20,14 @@ func (s *Session) MGET(req *ArrayResp, seq int64) {
 		ar.Rtype = ArrayType
 		br := &BulkResp{}
 		br.Rtype = BulkType
-		br.Args = [][]byte{[]byte("GET"), req.Args[i+1].Args[0]}
+		br.Args = [][]byte{[]byte("GET")}
 		ar.Args = append(ar.Args, br)
+
+		br1 := &BulkResp{}
+		br1.Rtype = BulkType
+		br1.Args = [][]byte{req.Args[i+1].Args[0]}
+		ar.Args = append(ar.Args, br1)
+
 		resp, err := s.ExecWithRedirect(ar, true)
 		if err != nil {
 			log.Warning("Session MGET ExecWithRedirect wrong ", ar.String())
@@ -57,8 +66,19 @@ func (s *Session) MSET(req *ArrayResp, seq int64) {
 		ar.Rtype = ArrayType
 		br := &BulkResp{}
 		br.Rtype = BulkType
-		br.Args = [][]byte{[]byte("SET"), req.Args[i+1].Args[0], req.Args[i+2].Args[0]}
+		br.Args = [][]byte{[]byte("SET")}
 		ar.Args = append(ar.Args, br)
+
+		br1 := &BulkResp{}
+		br1.Rtype = BulkType
+		br1.Args = [][]byte{req.Args[i+1].Args[0]}
+		ar.Args = append(ar.Args, br1)
+
+		br2 := &BulkResp{}
+		br2.Rtype = BulkType
+		br2.Args = [][]byte{req.Args[i+2].Args[0]}
+		ar.Args = append(ar.Args, br2)
+
 		resp, err := s.ExecWithRedirect(ar, true)
 		if err != nil {
 			log.Warning("Session MSET ExecWithRedirect wrong ", ar.String())
@@ -91,8 +111,13 @@ func (s *Session) DEL(req *ArrayResp, seq int64) {
 		ar.Rtype = ArrayType
 		br := &BulkResp{}
 		br.Rtype = BulkType
-		br.Args = [][]byte{[]byte("DEL"), req.Args[i+1].Args[0]}
+		br.Args = [][]byte{[]byte("DEL")}
 		ar.Args = append(ar.Args, br)
+
+		br1 := &BulkResp{}
+		br1.Rtype = BulkType
+		br1.Args = [][]byte{req.Args[i+1].Args[0]}
+		ar.Args = append(ar.Args, br1)
 
 		resp, err := s.ExecWithRedirect(ar, true)
 		if err != nil {
@@ -104,14 +129,14 @@ func (s *Session) DEL(req *ArrayResp, seq int64) {
 			log.Warning("Session DEL ExecWithRedirect  wrong must get IntResp")
 			continue
 		}
-
-		if ir.Args[0][0] == byte('1') {
+		log.Info("DEL resp ", ir.Rtype, string(ir.Args[0]))
+		if bytes.Equal(ir.Args[0], []byte("1")) {
 			del += 1
 		}
 	}
 	r := &IntResp{}
 	r.Rtype = IntType
-	r.Args = append(r.Args, []byte(string(del)))
+	r.Args = append(r.Args, util.Itob(del))
 	s.resps <- WrappedResp(r, seq)
 	return
 }

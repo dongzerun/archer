@@ -59,13 +59,13 @@ func NewProxyConfig(file string) *ProxyConfig {
 	// redis
 	pc.poolSize = c.DefaultInt("redis::poolsize", 10)
 	pc.nodes = strings.Fields(c.DefaultString("redis::nodes", ""))
-	pc.reloadSlot = time.Duration(c.DefaultInt("redis::reloadslot", 600))
+	pc.reloadSlot = time.Duration(c.DefaultInt("redis::reloadslot", 600)) * time.Second
 
 	//common
-	pc.idleTimeout = time.Duration(c.DefaultInt("common::idletimeout", 30))
-	pc.writeTimeout = time.Duration(c.DefaultInt("common::writetimeout", 5))
-	pc.readTimeout = time.Duration(c.DefaultInt("common::readtimeout", 5))
-	pc.dialTimeout = time.Duration(c.DefaultInt("common::dialtimeout", 3))
+	pc.idleTimeout = time.Duration(c.DefaultInt("common::idletimeout", 30)) * time.Second
+	pc.writeTimeout = time.Duration(c.DefaultInt("common::writetimeout", 5)) * time.Second
+	pc.readTimeout = time.Duration(c.DefaultInt("common::readtimeout", 5)) * time.Second
+	pc.dialTimeout = time.Duration(c.DefaultInt("common::dialtimeout", 3)) * time.Second
 
 	//log
 	pc.logFile = c.DefaultString("log::logfile", "")

@@ -50,7 +50,7 @@ func RedisConnDialer(host string, port int, id string, pc *ProxyConfig) func() (
 		var err error
 
 		if pc.dialTimeout > 0 {
-			c, err = net.DialTimeout("tcp4", fmt.Sprintf("%s:%d", host, port), pc.dialTimeout)
+			c, err = net.DialTimeout("tcp4", fmt.Sprintf("%s:%d", host, port), pc.dialTimeout*time.Second)
 		} else {
 			c, err = net.Dial("tcp4", fmt.Sprintf("%s:%d", host, port))
 		}
@@ -65,6 +65,7 @@ func RedisConnDialer(host string, port int, id string, pc *ProxyConfig) func() (
 			r:            bufio.NewReader(c),
 			readTimeout:  pc.readTimeout,
 			writeTimeout: pc.writeTimeout,
+			lastUsed:     time.Now(),
 		}
 		return conn, nil
 	}

@@ -58,7 +58,7 @@ func NewTopo(pc *ProxyConfig) *Topology {
 }
 
 func (t *Topology) ReloadLoop() {
-	ticker := time.NewTicker(t.conf.reloadSlot * time.Second)
+	ticker := time.NewTicker(t.conf.reloadSlot)
 	for {
 		select {
 		case <-ticker.C:

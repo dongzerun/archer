@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/dongzerun/archer/ratelimit"
-	log "github.com/ngaut/logging"
 )
 
 var (
@@ -87,7 +86,7 @@ func (opt *Options) getNetwork() string {
 
 func (opt *Options) getDialer() func() (Conn, error) {
 	if opt.Dialer == nil {
-		log.Fatal("Options Caller must use your own Dialer")
+		panic("Options Caller must use your own Dialer")
 	}
 	return opt.Dialer
 }
@@ -131,13 +130,13 @@ func newconnList(size int) *connList {
 	}
 }
 
-func (l connList) Len() int {
+func (l *connList) Len() int {
 	return int(atomic.LoadInt32(&l.len))
 }
 
 // Reserve reserves place in the list and returns true on success. The
 // caller must add or remove connection if place was reserved.
-func (l connList) Reserve() bool {
+func (l *connList) Reserve() bool {
 	len := atomic.AddInt32(&l.len, 1)
 	reserved := len <= l.size
 	if !reserved {
@@ -147,14 +146,14 @@ func (l connList) Reserve() bool {
 }
 
 // Add adds connection to the list. The caller must reserve place first.
-func (l connList) Add(cn Conn) {
+func (l *connList) Add(cn Conn) {
 	l.mx.Lock()
 	l.cns = append(l.cns, cn)
 	l.mx.Unlock()
 }
 
 // Remove closes connection and removes it from the list.
-func (l connList) Remove(cn Conn) error {
+func (l *connList) Remove(cn Conn) error {
 	defer l.mx.Unlock()
 	l.mx.Lock()
 
@@ -162,7 +161,7 @@ func (l connList) Remove(cn Conn) error {
 		atomic.AddInt32(&l.len, -1)
 		return nil
 	}
-
+	// ensure Conn in l.cns
 	for i, c := range l.cns {
 		if c == cn {
 			l.cns = append(l.cns[:i], l.cns[i+1:]...)
@@ -177,7 +176,7 @@ func (l connList) Remove(cn Conn) error {
 	panic("conn not found in the list")
 }
 
-func (l connList) Replace(cn, newcn Conn) error {
+func (l *connList) Replace(cn, newcn Conn) error {
 	defer l.mx.Unlock()
 	l.mx.Lock()
 
@@ -194,7 +193,7 @@ func (l connList) Replace(cn, newcn Conn) error {
 	panic("conn not found in the list")
 }
 
-func (l connList) Close() (retErr error) {
+func (l *connList) Close() (retErr error) {
 	l.mx.Lock()
 	for _, c := range l.cns {
 		if err := c.Close(); err != nil {
@@ -207,7 +206,7 @@ func (l connList) Close() (retErr error) {
 	return retErr
 }
 
-func (l connList) closed() bool {
+func (l *connList) closed() bool {
 	return l.cns == nil
 }
 
@@ -297,7 +296,6 @@ func (p ConnPool) new() (Conn, error) {
 		p.lastDialErr = err
 		return nil, err
 	}
-
 	return cn, nil
 }
 
@@ -333,7 +331,6 @@ func (p ConnPool) Get() (Conn, error) {
 
 func (p ConnPool) Put(cn Conn) error {
 	if cn.Discard() != nil {
-		log.Warning("redis: connection has unread data")
 		return p.Remove(cn)
 	}
 	if p.opt.getIdleTimeout() > 0 {
@@ -347,7 +344,6 @@ func (p ConnPool) Remove(cn Conn) error {
 	// Replace existing connection with new one and unblock waiter.
 	newcn, err := p.new()
 	if err != nil {
-		log.Warningf("redis: new failed: %s", err)
 		return p.conns.Remove(cn)
 	}
 	err = p.conns.Replace(cn, newcn)

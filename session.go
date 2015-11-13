@@ -32,13 +32,22 @@ func newSessMana(t time.Duration) *SessMana {
 }
 
 func (sm *SessMana) Put(remote string, s *Session) {
+	log.Info("New Session Put to Session Management ", remote)
 	sm.l.Lock()
 	defer sm.l.Unlock()
 	sm.pool[remote] = s
 }
 
+func (sm *SessMana) Del(remote string, s *Session) {
+	log.Info("New Session Del from Session Management ", remote)
+	sm.l.Lock()
+	defer sm.l.Unlock()
+	delete(sm.pool, remote)
+}
+
 func (sm *SessMana) CheckLoop() {
-	ticker := time.NewTicker(sm.idle * time.Second)
+	ticker := time.NewTicker(time.Minute)
+	defer ticker.Stop()
 	for {
 		select {
 		case <-ticker.C:
@@ -83,6 +92,7 @@ type Session struct {
 	respSequence int64
 
 	lastUsed time.Time
+	remote   string
 }
 
 func NewSession(p *Proxy, c net.Conn) *Session {
@@ -100,13 +110,14 @@ func NewSession(p *Proxy, c net.Conn) *Session {
 		//max dispatch concurrency goroutine per session
 		conCurrency: make(chan int, p.pc.conCurrency),
 		quitChan:    make(chan int, 1),
+		lastUsed:    time.Now(),
+		remote:      c.RemoteAddr().String(),
 	}
 
 	for i := 0; i < p.pc.conCurrency; i++ {
 		s.conCurrency <- 1
 	}
 
-	p.sm.Put(c.RemoteAddr().String(), s)
 	return s
 }
 
@@ -305,6 +316,7 @@ func (s *Session) GetRedisConnByKey(key []byte, slave bool) (*RedisConn, error) 
 	if !ok {
 		return nil, fmt.Errorf("proxy error: GetRedisConnByKey failed")
 	}
+
 	return rc, nil
 }
 
@@ -318,6 +330,7 @@ func (s *Session) GetRedisConnByID(id string) (*RedisConn, error) {
 	if !ok {
 		return nil, fmt.Errorf("proxy error: GetRedisConnByID failed")
 	}
+
 	return rc, nil
 }
 
@@ -411,10 +424,13 @@ func (s *Session) ExecOnce(c *RedisConn, req *ArrayResp) (Resp, error) {
 }
 
 func (s *Session) Close() {
-	if !s.closed {
-		s.closed = true
-		close(s.quitChan)
+	if s.closed {
+		return
 	}
+
+	s.closed = true
+	close(s.quitChan)
+	s.p.sm.Del(s.remote, s)
 
 	if s.c != nil {
 		s.c.Close()
