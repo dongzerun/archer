@@ -55,6 +55,7 @@ func RedisConnDialer(host string, port int, id string, pc *ProxyConfig) func() (
 			c, err = net.Dial("tcp4", fmt.Sprintf("%s:%d", host, port))
 		}
 		if err != nil {
+			log.Warning("RedisConnDialer failed ", err)
 			return nil, err
 		}
 
