@@ -18,7 +18,7 @@ func Iu32tob(i int) []byte {
 }
 
 func Iu32tob2(i int) []byte {
-	buf := make([]byte, 10)
+	buf := make([]byte, 10) // 大量小对象的创建是个问题
 	idx := len(buf) - 1
 	for i >= 10 {
 		buf[idx] = byte('0' + i%10)

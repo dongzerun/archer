@@ -94,6 +94,33 @@ func TestBulkResp(t *testing.T) {
 	}
 }
 
+func Benchmark_ArrayRespEncoding(b *testing.B) {
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			br := &BulkResp{}
+			br.Args = [][]byte{[]byte("hello")}
+			br.Rtype = BulkType
+
+			br1 := &BulkResp{}
+			br1.Args = [][]byte{[]byte("world")}
+			br1.Rtype = BulkType
+
+			br2 := &BulkResp{}
+			br2.Args = [][]byte{[]byte("wocao\r\nzhaha")}
+			br2.Rtype = BulkType
+
+			br3 := &BulkResp{}
+			br3.Rtype = BulkType
+			br3.Empty = true
+
+			ar := &ArrayResp{}
+			ar.Rtype = ArrayType
+			ar.Args = append(ar.Args, br, br1, br2, br3)
+			_ = ar.Encode()
+		}
+	})
+}
+
 func TestArrayResp(t *testing.T) {
 	br := &BulkResp{}
 	br.Args = [][]byte{[]byte("hello")}

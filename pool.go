@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/dongzerun/archer/ratelimit"
-	log "github.com/ngaut/logging"
 )
 
 var (
@@ -295,7 +294,6 @@ func (p ConnPool) new() (Conn, error) {
 	cn, err := p.dialer()
 	if err != nil {
 		p.lastDialErr = err
-		log.Warning("ConnPool new dailer failed ", err)
 		return nil, err
 	}
 	return cn, nil
@@ -314,14 +312,11 @@ func (p ConnPool) Get() (Conn, error) {
 
 	// Try to create a new one.
 	if p.conns.Reserve() {
-		log.Warning("here")
 		cn, err := p.new()
 		if err != nil {
-			log.Warning("ConnPool Get new failed ", err)
 			p.conns.Remove(nil)
 			return nil, err
 		}
-		log.Warning("ok")
 		p.conns.Add(cn)
 		return cn, nil
 	}

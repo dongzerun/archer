@@ -7,9 +7,14 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"sync"
 
 	"github.com/dongzerun/archer/util"
 )
+
+var scratchPool = sync.Pool{
+	New: func() interface{} { return new(bytes.Buffer) },
+}
 
 var (
 	_ Resp = (*SimpleResp)(nil)
@@ -87,7 +92,10 @@ func (sr *SimpleResp) Encode() []byte {
 		panic(e)
 	}
 
-	var b bytes.Buffer
+	// var b bytes.Buffer
+	b := scratchPool.Get().(*bytes.Buffer)
+	b.Reset()
+	defer scratchPool.Put(b)
 	b.WriteByte(SimpSep)
 	b.Write(sr.Args[0])
 	b.Write(CRLF)
@@ -104,7 +112,10 @@ func (er *ErrorResp) Encode() []byte {
 		panic(e)
 	}
 
-	var b bytes.Buffer
+	// var b bytes.Buffer
+	b := scratchPool.Get().(*bytes.Buffer)
+	b.Reset()
+	defer scratchPool.Put(b)
 	b.WriteByte(ErrSep)
 	b.Write(er.Args[0])
 	b.Write(CRLF)
@@ -121,7 +132,10 @@ func (ir *IntResp) Encode() []byte {
 		panic(e)
 	}
 
-	var b bytes.Buffer
+	// var b bytes.Buffer
+	b := scratchPool.Get().(*bytes.Buffer)
+	b.Reset()
+	defer scratchPool.Put(b)
 	b.WriteByte(IntSep)
 	b.Write(ir.Args[0])
 	b.Write(CRLF)
@@ -143,7 +157,10 @@ func (br *BulkResp) Encode() []byte {
 		return []byte("$-1\r\n")
 	}
 
-	var b bytes.Buffer
+	// var b bytes.Buffer
+	b := scratchPool.Get().(*bytes.Buffer)
+	b.Reset()
+	defer scratchPool.Put(b)
 	b.WriteByte(BulkSep)
 	b.Write(util.Iu32tob2(len(br.Args[0])))
 	b.Write(CRLF)
@@ -171,7 +188,10 @@ func (ar *ArrayResp) Encode() []byte {
 		panic(e)
 	}
 
-	var b bytes.Buffer
+	// var b bytes.Buffer
+	b := scratchPool.Get().(*bytes.Buffer)
+	b.Reset()
+	defer scratchPool.Put(b)
 	b.WriteByte(ArrSep)
 	b.Write(util.Iu32tob2(len(ar.Args)))
 	b.Write(CRLF)
