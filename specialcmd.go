@@ -136,7 +136,7 @@ func (s *Session) DEL(req *ArrayResp, seq int64) {
 	}
 	r := &IntResp{}
 	r.Rtype = IntType
-	r.Args = append(r.Args, util.Itob(del))
+	r.Args = append(r.Args, util.Iu32tob(del))
 	s.resps <- WrappedResp(r, seq)
 	return
 }

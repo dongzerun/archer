@@ -1,12 +1,19 @@
 package util
 
 import (
+	"encoding/binary"
 	"errors"
 	"strconv"
 )
 
 func Itob(i int) []byte {
 	return []byte(strconv.Itoa(i))
+}
+
+func Iu32tob(i int) []byte {
+	buf := make([]byte, 4)
+	binary.PutUvarint(buf, uint64(i))
+	return buf
 }
 
 func ParseLen(p []byte) (int, error) {

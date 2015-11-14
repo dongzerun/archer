@@ -145,7 +145,7 @@ func (br *BulkResp) Encode() []byte {
 
 	var b bytes.Buffer
 	b.WriteByte(BulkSep)
-	b.Write(util.Itob(len(br.Args[0])))
+	b.Write(util.Iu32tob(len(br.Args[0])))
 	b.Write(CRLF)
 	b.Write(br.Args[0])
 	b.Write(CRLF)
@@ -173,7 +173,7 @@ func (ar *ArrayResp) Encode() []byte {
 
 	var b bytes.Buffer
 	b.WriteByte(ArrSep)
-	b.Write(util.Itob(len(ar.Args)))
+	b.Write(util.Iu32tob(len(ar.Args)))
 	b.Write(CRLF)
 
 	for _, arg := range ar.Args {
