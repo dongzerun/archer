@@ -16,10 +16,11 @@ import (
 )
 
 type SessMana struct {
-	l    sync.Mutex
-	pool map[string]*Session
+	l sync.Mutex // Session 锁
 
-	idle time.Duration
+	pool map[string]*Session // Session Map
+
+	idle time.Duration // 超时时长
 }
 
 func newSessMana(t time.Duration) *SessMana {
@@ -27,7 +28,7 @@ func newSessMana(t time.Duration) *SessMana {
 		pool: make(map[string]*Session, 4096),
 		idle: t,
 	}
-	go sm.CheckLoop()
+	go sm.CheckIdleLoop()
 	return sm
 }
 
@@ -43,7 +44,7 @@ func (sm *SessMana) Del(remote string, s *Session) {
 	delete(sm.pool, remote)
 }
 
-func (sm *SessMana) CheckLoop() {
+func (sm *SessMana) CheckIdleLoop() {
 	ticker := time.NewTicker(time.Minute)
 	defer ticker.Stop()
 	for {
@@ -64,8 +65,8 @@ func (sm *SessMana) CheckLoop() {
 
 // for pipeline wrap Req and Resp with Sequence
 type wrappedResp struct {
-	seq  int64
-	resp Resp
+	seq  int64 // Session 级别的自增64位ID
+	resp Resp  // Redis 协议结果
 }
 
 type Session struct {

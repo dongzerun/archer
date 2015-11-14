@@ -18,7 +18,7 @@ func init() {
 }
 
 type Node struct {
-	id        string // 0799a0354fe57b79b32122c2b1231ba43f09832d
+	id        string // host:port
 	host      string
 	port      int
 	role      string
@@ -38,11 +38,13 @@ type Slot struct {
 }
 
 type Topology struct {
-	conf  *ProxyConfig
-	rw    sync.RWMutex
-	slots []*Slot
+	conf *ProxyConfig // 全局配置
 
-	reloadChan chan int
+	rw sync.RWMutex // 读写锁
+
+	slots []*Slot // Cluster Slot 逻辑拓扑结构
+
+	reloadChan chan int // Reload 消息 channel
 }
 
 func NewTopo(pc *ProxyConfig) *Topology {
@@ -158,7 +160,7 @@ func (t *Topology) GetNodeID(key []byte, slave bool) string {
 
 	// default we have only 1 slave
 	// TODO:: add more slave RR read
-	if slave && len(s.slaves) == 1 {
+	if slave && len(s.slaves) >= 1 {
 		return s.slaves[0].id
 	}
 

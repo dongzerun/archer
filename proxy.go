@@ -10,14 +10,15 @@ import (
 )
 
 type Proxy struct {
-	l      net.Listener
-	h      string
-	p      int
-	filter Filter
-	pc     *ProxyConfig
+	l net.Listener // 监听 Listener
 
-	sm      *SessMana
-	cluster *Cluster
+	filter Filter // Redis 有效协议检测过滤器
+
+	pc *ProxyConfig // 全局配置文件
+
+	sm *SessMana // Session 管理
+
+	cluster *Cluster // 集群实现
 }
 
 func NewProxy(pc *ProxyConfig) *Proxy {

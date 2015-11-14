@@ -8,7 +8,7 @@ import (
 
 type Cluster struct {
 	pc    *ProxyConfig
-	pools map[string]*ConnPool //key: node id host:port
+	pools map[string]pool //key: node id host:port
 	opts  map[string]*Options
 
 	topo *Topology
@@ -17,7 +17,7 @@ type Cluster struct {
 func NewCluster(pc *ProxyConfig) *Cluster {
 	c := &Cluster{
 		pc:    pc,
-		pools: make(map[string]*ConnPool, 1),
+		pools: make(map[string]pool, 1),
 		opts:  make(map[string]*Options, 1),
 		topo:  NewTopo(pc),
 	}
