@@ -104,6 +104,7 @@ func (c *Cluster) initializePool() {
 		//test
 		testConn, err := c.pools[n.id].Get()
 		if err != nil {
+			log.Warning("test pool failed ", err)
 			continue
 		}
 		c.pools[n.id].Put(testConn)
