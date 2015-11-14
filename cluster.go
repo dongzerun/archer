@@ -101,6 +101,12 @@ func (c *Cluster) initializePool() {
 
 		c.pools[n.id] = NewConnPool(opt)
 		c.opts[n.id] = opt
+		//test
+		testConn, err := c.pools[n.id].Get()
+		if err != nil {
+			continue
+		}
+		c.pools[n.id].Put(testConn)
 	}
 	log.Info("Cluster initializePool done")
 }
