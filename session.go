@@ -71,7 +71,7 @@ type wrappedResp struct {
 
 type Session struct {
 	p *Proxy
-	c net.Conn // client side Network Connection
+	c *util.Conn // client side Network  Wrapped Conn
 	w *bufio.Writer
 	r *bufio.Reader
 
@@ -97,9 +97,7 @@ type Session struct {
 func NewSession(p *Proxy, c net.Conn) *Session {
 	s := &Session{
 		p: p,
-		c: c,
-		w: bufio.NewWriter(c),
-		r: bufio.NewReader(c),
+		c: &util.Conn{Conn: c},
 		//pipeline length 4096
 		cmds:  make(chan *wrappedResp, p.pc.pipeLength),
 		resps: make(chan *wrappedResp, p.pc.pipeLength),
@@ -112,6 +110,17 @@ func NewSession(p *Proxy, c net.Conn) *Session {
 		lastUsed:    time.Now(),
 		remote:      c.RemoteAddr().String(),
 	}
+
+	if p.pc.readTimeout > 0 {
+		s.c.ReadTimeout = p.pc.readTimeout
+	}
+
+	if p.pc.writeTimeout > 0 {
+		s.c.WriteTimeout = p.pc.writeTimeout
+	}
+
+	s.w = bufio.NewWriter(s.c)
+	s.r = bufio.NewReader(s.c)
 
 	for i := 0; i < p.pc.conCurrency; i++ {
 		s.conCurrency <- 1
