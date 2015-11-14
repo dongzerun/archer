@@ -10,9 +10,10 @@ import (
 	"sync"
 
 	"github.com/dongzerun/archer/util"
+	// "github.com/oxtoacart/bpool"
 )
 
-var scratchPool = sync.Pool{
+var bPool = sync.Pool{
 	New: func() interface{} { return new(bytes.Buffer) },
 }
 
@@ -56,7 +57,7 @@ var (
 // For Bulk Strings the first byte of the reply is "$"
 // For Arrays the first byte of the reply is "*"
 type Resp interface {
-	Encode() []byte
+	Encode(w *bufio.Writer) error
 	String() string
 	Type() string
 	Length() int //只给ArrayResp使用，检测命令参数的个数，其它均为0
@@ -86,60 +87,67 @@ type SimpleResp struct {
 	BaseResp
 }
 
-func (sr *SimpleResp) Encode() []byte {
+func (sr *SimpleResp) Encode(w *bufio.Writer) error {
 	if sr.Rtype != SimpleType {
 		e := fmt.Sprintf("SimpleResp Encode Type error: %s, expected %s", sr.Rtype, SimpleType)
 		panic(e)
 	}
 
 	// var b bytes.Buffer
-	b := scratchPool.Get().(*bytes.Buffer)
+	b := bPool.Get().(*bytes.Buffer)
 	b.Reset()
-	defer scratchPool.Put(b)
+	defer bPool.Put(b)
 	b.WriteByte(SimpSep)
 	b.Write(sr.Args[0])
 	b.Write(CRLF)
-	return b.Bytes()
+	// bufpool.Put(b)
+	// return b.Bytes()
+	err := WriteRawByte(w, b.Bytes())
+	return err
 }
 
 type ErrorResp struct {
 	BaseResp
 }
 
-func (er *ErrorResp) Encode() []byte {
+func (er *ErrorResp) Encode(w *bufio.Writer) error {
 	if er.Rtype != ErrorType {
 		e := fmt.Sprintf("ErrorResp Encode Type error: %s, expected %s", er.Rtype, ErrorType)
 		panic(e)
 	}
 
 	// var b bytes.Buffer
-	b := scratchPool.Get().(*bytes.Buffer)
+	b := bPool.Get().(*bytes.Buffer)
 	b.Reset()
-	defer scratchPool.Put(b)
+	defer bPool.Put(b)
 	b.WriteByte(ErrSep)
 	b.Write(er.Args[0])
 	b.Write(CRLF)
-	return b.Bytes()
+	// return b.Bytes()
+	err := WriteRawByte(w, b.Bytes())
+	return err
 }
 
 type IntResp struct {
 	BaseResp
 }
 
-func (ir *IntResp) Encode() []byte {
+func (ir *IntResp) Encode(w *bufio.Writer) error {
 	if ir.Rtype != IntType {
 		e := fmt.Sprintf("IntResp Encode Type error: %s, expected %s", ir.Rtype, IntType)
 		panic(e)
 	}
 
 	// var b bytes.Buffer
-	b := scratchPool.Get().(*bytes.Buffer)
+	b := bPool.Get().(*bytes.Buffer)
 	b.Reset()
-	defer scratchPool.Put(b)
+	defer bPool.Put(b)
 	b.WriteByte(IntSep)
 	b.Write(ir.Args[0])
 	b.Write(CRLF)
-	return b.Bytes()
+	// return b.Bytes()
+	err := WriteRawByte(w, b.Bytes())
+	return err
 }
 
 type BulkResp struct {
@@ -147,7 +155,7 @@ type BulkResp struct {
 	Empty bool
 }
 
-func (br *BulkResp) Encode() []byte {
+func (br *BulkResp) Bytes() []byte {
 	if br.Rtype != BulkType {
 		e := fmt.Sprintf("BulkResp Encode Type error: %s, expected %s", br.Rtype, BulkType)
 		panic(e)
@@ -157,16 +165,37 @@ func (br *BulkResp) Encode() []byte {
 		return []byte("$-1\r\n")
 	}
 
-	// var b bytes.Buffer
-	b := scratchPool.Get().(*bytes.Buffer)
-	b.Reset()
-	defer scratchPool.Put(b)
+	var b bytes.Buffer
 	b.WriteByte(BulkSep)
 	b.Write(util.Iu32tob2(len(br.Args[0])))
 	b.Write(CRLF)
 	b.Write(br.Args[0])
 	b.Write(CRLF)
 	return b.Bytes()
+}
+
+func (br *BulkResp) Encode(w *bufio.Writer) error {
+	if br.Rtype != BulkType {
+		e := fmt.Sprintf("BulkResp Encode Type error: %s, expected %s", br.Rtype, BulkType)
+		panic(e)
+	}
+
+	if br.Empty {
+		// return []byte("$-1\r\n")
+		return WriteRawByte(w, []byte("$-1\r\n"))
+	}
+
+	// var b bytes.Buffer
+	b := bPool.Get().(*bytes.Buffer)
+	b.Reset()
+	defer bPool.Put(b)
+	b.WriteByte(BulkSep)
+	b.Write(util.Iu32tob2(len(br.Args[0])))
+	b.Write(CRLF)
+	b.Write(br.Args[0])
+	b.Write(CRLF)
+	err := WriteRawByte(w, b.Bytes())
+	return err
 }
 
 type ArrayResp struct {
@@ -182,24 +211,26 @@ func (ar *ArrayResp) String() string {
 	return strings.Join(str, " ")
 }
 
-func (ar *ArrayResp) Encode() []byte {
+func (ar *ArrayResp) Encode(w *bufio.Writer) error {
 	if ar.Rtype != ArrayType {
 		e := fmt.Sprintf("ArrayResp Encode Type error: %s, expected %s", ar.Rtype, ArrayType)
 		panic(e)
 	}
 
 	// var b bytes.Buffer
-	b := scratchPool.Get().(*bytes.Buffer)
+	b := bPool.Get().(*bytes.Buffer)
 	b.Reset()
-	defer scratchPool.Put(b)
+	defer bPool.Put(b)
 	b.WriteByte(ArrSep)
 	b.Write(util.Iu32tob2(len(ar.Args)))
 	b.Write(CRLF)
 
 	for _, arg := range ar.Args {
-		b.Write(arg.Encode())
+		b.Write(arg.Bytes())
 	}
-	return b.Bytes()
+	// return b.Bytes()
+	err := WriteRawByte(w, b.Bytes())
+	return err
 }
 
 func (ar *ArrayResp) Length() int {
@@ -219,7 +250,7 @@ func WriteRawByte(w *bufio.Writer, data []byte) error {
 }
 
 func WriteProtocol(w *bufio.Writer, r Resp) error {
-	return WriteRawByte(w, r.Encode())
+	return r.Encode(w)
 }
 
 // binary data  may contain \r\n
