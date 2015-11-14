@@ -165,9 +165,10 @@ func (br *BulkResp) Bytes() []byte {
 		return []byte("$-1\r\n")
 	}
 
-	var b bytes.Buffer
+	var b *bytes.Buffer
 	b.WriteByte(BulkSep)
-	b.Write(util.Iu32tob2(len(br.Args[0])))
+	// b.Write(util.Iu32tob2(len(br.Args[0])))
+	util.WriteLength(b, len(br.Args[0]))
 	b.Write(CRLF)
 	b.Write(br.Args[0])
 	b.Write(CRLF)
@@ -190,7 +191,8 @@ func (br *BulkResp) Encode(w *bufio.Writer) error {
 	b.Reset()
 	defer bPool.Put(b)
 	b.WriteByte(BulkSep)
-	b.Write(util.Iu32tob2(len(br.Args[0])))
+	// b.Write(util.Iu32tob2(len(br.Args[0])))
+	util.WriteLength(b, len(br.Args[0]))
 	b.Write(CRLF)
 	b.Write(br.Args[0])
 	b.Write(CRLF)
@@ -222,7 +224,8 @@ func (ar *ArrayResp) Encode(w *bufio.Writer) error {
 	b.Reset()
 	defer bPool.Put(b)
 	b.WriteByte(ArrSep)
-	b.Write(util.Iu32tob2(len(ar.Args)))
+	// b.Write(util.Iu32tob2(len(ar.Args)))
+	util.WriteLength(b, len(br.Args))
 	b.Write(CRLF)
 
 	for _, arg := range ar.Args {

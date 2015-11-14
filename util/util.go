@@ -1,13 +1,15 @@
 package util
 
 import (
+	"bytes"
 	"errors"
 	"strconv"
+	"sycn"
 )
 
-// var scratchPool = sync.Pool{
-// 	New: func() interface{} { return make([]byte, 12) },
-// }
+var scratchPool = sync.Pool{
+	New: func() interface{} { return make([]byte, 10) },
+	}
 
 func Itob(i int) []byte {
 	return []byte(strconv.Itoa(i))
@@ -27,6 +29,19 @@ func Iu32tob2(i int) []byte {
 	}
 	buf[idx] = byte('0' + i)
 	return buf[idx:]
+}
+
+func WriteLength(w *bytes.Buffer, i int) (int, error) {
+	// buf := make([]byte, 10) // 大量小对象的创建是个问题
+	buf := scratchPool.
+	idx := len(buf) - 1
+	for i >= 10 {
+		buf[idx] = byte('0' + i%10)
+		i = i / 10
+		idx--
+	}
+	buf[idx] = byte('0' + i)
+	return w.Write(buf[idx:])
 }
 
 func ParseLen(p []byte) (int, error) {
