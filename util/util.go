@@ -4,12 +4,12 @@ import (
 	"bytes"
 	"errors"
 	"strconv"
-	"sycn"
+	"sync"
 )
 
 var scratchPool = sync.Pool{
 	New: func() interface{} { return make([]byte, 10) },
-	}
+}
 
 func Itob(i int) []byte {
 	return []byte(strconv.Itoa(i))
@@ -33,7 +33,8 @@ func Iu32tob2(i int) []byte {
 
 func WriteLength(w *bytes.Buffer, i int) (int, error) {
 	// buf := make([]byte, 10) // 大量小对象的创建是个问题
-	buf := scratchPool.
+	buf := scratchPool.Get().([]byte)
+	defer scratchPool.Put(buf)
 	idx := len(buf) - 1
 	for i >= 10 {
 		buf[idx] = byte('0' + i%10)
@@ -41,7 +42,8 @@ func WriteLength(w *bytes.Buffer, i int) (int, error) {
 		idx--
 	}
 	buf[idx] = byte('0' + i)
-	return w.Write(buf[idx:])
+	n, err := w.Write(buf[idx:])
+	return n, err
 }
 
 func ParseLen(p []byte) (int, error) {

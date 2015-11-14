@@ -225,7 +225,7 @@ func (ar *ArrayResp) Encode(w *bufio.Writer) error {
 	defer bPool.Put(b)
 	b.WriteByte(ArrSep)
 	// b.Write(util.Iu32tob2(len(ar.Args)))
-	util.WriteLength(b, len(br.Args))
+	util.WriteLength(b, len(ar.Args))
 	b.Write(CRLF)
 
 	for _, arg := range ar.Args {
