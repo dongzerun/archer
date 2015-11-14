@@ -165,7 +165,7 @@ func (br *BulkResp) Bytes() []byte {
 		return []byte("$-1\r\n")
 	}
 
-	var b *bytes.Buffer
+	b := bytes.NewBuffer(nil)
 	b.WriteByte(BulkSep)
 	// b.Write(util.Iu32tob2(len(br.Args[0])))
 	util.WriteLength(b, len(br.Args[0]))
