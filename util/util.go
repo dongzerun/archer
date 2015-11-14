@@ -1,19 +1,32 @@
 package util
 
 import (
-	"encoding/binary"
 	"errors"
 	"strconv"
 )
+
+// var scratchPool = sync.Pool{
+// 	New: func() interface{} { return make([]byte, 12) },
+// }
 
 func Itob(i int) []byte {
 	return []byte(strconv.Itoa(i))
 }
 
 func Iu32tob(i int) []byte {
-	buf := make([]byte, 4)
-	binary.PutUvarint(buf, uint64(i))
-	return buf
+	return strconv.AppendUint(nil, uint64(i), 10)
+}
+
+func Iu32tob2(i int) []byte {
+	buf := make([]byte, 10)
+	idx := len(buf) - 1
+	for i >= 10 {
+		buf[idx] = byte('0' + i%10)
+		i = i / 10
+		idx--
+	}
+	buf[idx] = byte('0' + i)
+	return buf[idx:]
 }
 
 func ParseLen(p []byte) (int, error) {

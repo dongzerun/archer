@@ -15,3 +15,9 @@ func Benchmark_Iu32tob(b *testing.B) {
 		Iu32tob(i)
 	}
 }
+
+func Benchmark_Iu32tob2(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		Iu32tob2(i)
+	}
+}

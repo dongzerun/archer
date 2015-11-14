@@ -314,12 +314,14 @@ func (p ConnPool) Get() (Conn, error) {
 
 	// Try to create a new one.
 	if p.conns.Reserve() {
+		log.Warning("here")
 		cn, err := p.new()
 		if err != nil {
 			log.Warning("ConnPool Get new failed ", err)
 			p.conns.Remove(nil)
 			return nil, err
 		}
+		log.Warning("ok")
 		p.conns.Add(cn)
 		return cn, nil
 	}
