@@ -46,6 +46,10 @@ var (
 	MOVED  = []byte("MOVED")
 	ASK    = []byte("ASK")
 	ASKING = []byte("ASKING")
+
+	ArrSepReadError         = errors.New("In  ReadResp ArrSep, must read BulkResp")
+	RawCmdError             = errors.New("raw command must be quit or ping")
+	ReadRespUnexpectedError = errors.New("ReadResp error, unexpected")
 )
 
 // Response Interface based on: redis client protocol
@@ -165,7 +169,7 @@ func (br *BulkResp) Bytes() []byte {
 		return []byte("$-1\r\n")
 	}
 
-	b := bytes.NewBuffer(nil)
+	b := new(bytes.Buffer)
 	b.WriteByte(BulkSep)
 	// b.Write(util.Iu32tob2(len(br.Args[0])))
 	util.WriteLength(b, len(br.Args[0]))
@@ -316,7 +320,7 @@ func ReadProtocol(r *bufio.Reader) (Resp, error) {
 			}
 			br, ok := rsp.(*BulkResp)
 			if !ok {
-				return nil, errors.New("In  ReadResp ArrSep, must read BulkResp")
+				return nil, ArrSepReadError
 			}
 			ar.Args = append(ar.Args, br)
 		}
@@ -325,7 +329,7 @@ func ReadProtocol(r *bufio.Reader) (Resp, error) {
 		fallthrough
 	case byte('q'):
 		if len(res) != 6 {
-			return nil, errors.New("raw command must be quit or ping")
+			return nil, RawCmdError
 		}
 		ar := &ArrayResp{}
 		ar.Rtype = ArrayType
@@ -338,7 +342,7 @@ func ReadProtocol(r *bufio.Reader) (Resp, error) {
 		fallthrough
 	case byte('P'):
 		if len(res) != 6 {
-			return nil, errors.New("raw command must be quit or ping")
+			return nil, RawCmdError
 		}
 		ar := &ArrayResp{}
 		ar.Rtype = ArrayType
@@ -349,5 +353,5 @@ func ReadProtocol(r *bufio.Reader) (Resp, error) {
 		return ar, nil
 	}
 
-	return nil, errors.New("ReadResp error, unexpected: " + string(res) + string(res[0]))
+	return nil, ReadRespUnexpectedError
 }
