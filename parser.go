@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"errors"
-	"fmt"
 	"io"
 	"strings"
 	"sync"
@@ -38,18 +37,20 @@ var (
 	ArrSep  = byte('*')
 	CRLF    = []byte("\r\n")
 
-	PING   = []byte("PING")
-	PONG   = []byte("PONG")
-	SELECT = []byte("SELECT")
-	OK     = []byte("OK")
-	QUIT   = []byte("QUIT")
-	MOVED  = []byte("MOVED")
-	ASK    = []byte("ASK")
-	ASKING = []byte("ASKING")
+	PING      = []byte("PING")
+	PONG      = []byte("PONG")
+	SELECT    = []byte("SELECT")
+	OK        = []byte("OK")
+	QUIT      = []byte("QUIT")
+	MOVED     = []byte("MOVED")
+	ASK       = []byte("ASK")
+	ASKING    = []byte("ASKING")
+	EmptyBulk = []byte("$-1\r\n")
 
 	ArrSepReadError         = errors.New("In  ReadResp ArrSep, must read BulkResp")
 	RawCmdError             = errors.New("raw command must be quit or ping")
 	ReadRespUnexpectedError = errors.New("ReadResp error, unexpected")
+	RespTypeError           = errors.New("Encode Type error")
 )
 
 // Response Interface based on: redis client protocol
@@ -93,8 +94,7 @@ type SimpleResp struct {
 
 func (sr *SimpleResp) Encode(w *bufio.Writer) error {
 	if sr.Rtype != SimpleType {
-		e := fmt.Sprintf("SimpleResp Encode Type error: %s, expected %s", sr.Rtype, SimpleType)
-		panic(e)
+		panic(RespTypeError)
 	}
 
 	// var b bytes.Buffer
@@ -116,8 +116,7 @@ type ErrorResp struct {
 
 func (er *ErrorResp) Encode(w *bufio.Writer) error {
 	if er.Rtype != ErrorType {
-		e := fmt.Sprintf("ErrorResp Encode Type error: %s, expected %s", er.Rtype, ErrorType)
-		panic(e)
+		panic(RespTypeError)
 	}
 
 	// var b bytes.Buffer
@@ -138,8 +137,7 @@ type IntResp struct {
 
 func (ir *IntResp) Encode(w *bufio.Writer) error {
 	if ir.Rtype != IntType {
-		e := fmt.Sprintf("IntResp Encode Type error: %s, expected %s", ir.Rtype, IntType)
-		panic(e)
+		panic(RespTypeError)
 	}
 
 	// var b bytes.Buffer
@@ -161,12 +159,11 @@ type BulkResp struct {
 
 func (br *BulkResp) Bytes() []byte {
 	if br.Rtype != BulkType {
-		e := fmt.Sprintf("BulkResp Encode Type error: %s, expected %s", br.Rtype, BulkType)
-		panic(e)
+		panic(RespTypeError)
 	}
 
 	if br.Empty {
-		return []byte("$-1\r\n")
+		return EmptyBulk
 	}
 
 	b := new(bytes.Buffer)
@@ -181,13 +178,11 @@ func (br *BulkResp) Bytes() []byte {
 
 func (br *BulkResp) Encode(w *bufio.Writer) error {
 	if br.Rtype != BulkType {
-		e := fmt.Sprintf("BulkResp Encode Type error: %s, expected %s", br.Rtype, BulkType)
-		panic(e)
+		panic(RespTypeError)
 	}
 
 	if br.Empty {
-		// return []byte("$-1\r\n")
-		return WriteRawByte(w, []byte("$-1\r\n"))
+		return WriteRawByte(w, EmptyBulk)
 	}
 
 	// var b bytes.Buffer
@@ -219,8 +214,7 @@ func (ar *ArrayResp) String() string {
 
 func (ar *ArrayResp) Encode(w *bufio.Writer) error {
 	if ar.Rtype != ArrayType {
-		e := fmt.Sprintf("ArrayResp Encode Type error: %s, expected %s", ar.Rtype, ArrayType)
-		panic(e)
+		panic(RespTypeError)
 	}
 
 	// var b bytes.Buffer
@@ -335,7 +329,7 @@ func ReadProtocol(r *bufio.Reader) (Resp, error) {
 		ar.Rtype = ArrayType
 		br := &BulkResp{}
 		br.Rtype = BulkType
-		br.Args = [][]byte{[]byte("QUIT")}
+		br.Args = [][]byte{QUIT}
 		ar.Args = append(ar.Args, br)
 		return ar, nil
 	case byte('p'):
@@ -348,7 +342,7 @@ func ReadProtocol(r *bufio.Reader) (Resp, error) {
 		ar.Rtype = ArrayType
 		br := &BulkResp{}
 		br.Rtype = BulkType
-		br.Args = [][]byte{[]byte("PING")}
+		br.Args = [][]byte{PING}
 		ar.Args = append(ar.Args, br)
 		return ar, nil
 	}
